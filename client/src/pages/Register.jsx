@@ -1,20 +1,86 @@
-import { styled } from "styled-components";
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import styled from "styled-components";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { registerRoute } from "../utils/APIRoutes";
 
-function Register() {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    alert("form");
+export default function Register() {
+  const navigate = useNavigate();
+  const toastOptions = {
+    position: "bottom-right",
+    autoClose: 8000,
+    pauseOnHover: true,
+    draggable: true,
+    theme: "dark",
   };
-  const handleChange = (event) => {};
+  const [values, setValues] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleChange = (event) => {
+    setValues({ ...values, [event.target.name]: event.target.value });
+  };
+
+  const handleValidation = () => {
+    const { password, confirmPassword, username, email } = values;
+    if (password !== confirmPassword) {
+      toast.error("Les mots de passes ne sont pas identiques.", toastOptions);
+      return false;
+    } else if (username.length < 3) {
+      toast.error(
+        "Le nom d'utilisateur doit dépasser 3 lettres.",
+        toastOptions
+      );
+      return false;
+    } else if (password.length < 8) {
+      toast.error(
+        "Mot de passe doit avoir 8 caractères mniimum.",
+        toastOptions
+      );
+      return false;
+    } else if (email === "") {
+      toast.error("Email est requis.", toastOptions);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (handleValidation()) {
+      const { email, username, password } = values;
+      const { data } = await axios.post(registerRoute, {
+        username,
+        email,
+        password,
+      });
+
+      if (data.status === false) {
+        toast.error(data.msg, toastOptions);
+      }
+      if (data.status === true) {
+        localStorage.setItem(
+          process.env.REACT_APP_LOCALHOST_KEY,
+          JSON.stringify(data.user)
+        );
+        navigate("/");
+      }
+    }
+  };
+
   return (
     <>
       <FormContainer>
-        <form onSubmit={(event) => handleSubmit(event)}>
+        <form action="" onSubmit={(event) => handleSubmit(event)}>
           <div className="brand">
-            <img src="doctordash.png" alt="" />
-            <h1>Créer un compte</h1>
+            <img src="doctordash.png" alt="logo" />
+            <h1>PSP BI MSH</h1>
           </div>
           <input
             type="text"
@@ -24,7 +90,7 @@ function Register() {
           />
           <input
             type="email"
-            placeholder="Adresse Mail"
+            placeholder="Email"
             name="email"
             onChange={(e) => handleChange(e)}
           />
@@ -36,13 +102,13 @@ function Register() {
           />
           <input
             type="password"
-            placeholder="Confirmer Mot de passe"
+            placeholder="Confirmer mot de passe"
             name="confirmPassword"
             onChange={(e) => handleChange(e)}
           />
-          <button type="submit">Créer Compte</button>
+          <button type="submit">S'inscrire</button>
           <span>
-            Vous avez déjà un compte ? <Link to="/login">Connectez vous !</Link>
+            Vous avez déjà un compte ? <Link to="/">Connectez vous !</Link>
           </span>
         </form>
       </FormContainer>
@@ -53,18 +119,12 @@ function Register() {
 const FormContainer = styled.div`
   height: 100vh;
   width: 100vw;
-
   display: flex;
-
   flex-direction: column;
-
   justify-content: center;
-
   gap: 1rem;
   align-items: center;
-
   background-color: #131324;
-
   .brand {
     display: flex;
     align-items: center;
@@ -76,15 +136,9 @@ const FormContainer = styled.div`
     h1 {
       color: white;
       text-transform: uppercase;
-      font-family: "Poppins", sans-serif;
-      font-size: 1.5rem;
-      font-weight: 500;
-      letter-spacing: 1px;
-      text-align: center;
-      padding: 0.5rem;
-      border-radius: 0.5rem;
     }
   }
+
   form {
     display: flex;
     flex-direction: column;
@@ -92,45 +146,41 @@ const FormContainer = styled.div`
     background-color: #00000076;
     border-radius: 2rem;
     padding: 3rem 5rem;
-    input {
-      background-color: transparent;
-      padding: 1rem;
-      border: 0.1rem solid #4e0eff;
-      border-radius: 0.4rem;
-      color: white;
-      width: 100%;
-      font-size: 1rem;
-      &:focus {
-        border: 0.1rem solid #997af0;
-        outline: none;
-        transition: 0.2s ease-in-out;
-      }
+  }
+  input {
+    background-color: transparent;
+    padding: 1rem;
+    border: 0.1rem solid #4e0eff;
+    border-radius: 0.4rem;
+    color: white;
+    width: 100%;
+    font-size: 1rem;
+    &:focus {
+      border: 0.1rem solid #997af0;
+      outline: none;
     }
-    button {
+  }
+  button {
+    background-color: #4e0eff;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 0.4rem;
+    font-size: 1rem;
+    text-transform: uppercase;
+    &:hover {
       background-color: #4e0eff;
-      color: white;
-      padding: 1rem 2rem;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 0.4rem;
-      font-size: 1rem;
-      text-transform: uppercase;
-      transition: 0.2s ease-in-out;
-      &:hover {
-        background-color: #4e0eff;
-      }
     }
-    span {
-      color: white;
-      text-transform: uppercase;
-      a {
-        color: #4e0eff;
-        text-decoration: none;
-        font-weight: bold;
-      }
+  }
+  span {
+    color: white;
+    text-transform: uppercase;
+    a {
+      color: #4e0eff;
+      text-decoration: none;
+      font-weight: bold;
     }
   }
 `;
-
-export default Register;
